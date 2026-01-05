@@ -10,6 +10,7 @@ class RadioactivityRunner {
         this.platforms = [];
         this.ladders = [];
         this.bricks = [];
+        this.holes = []; // ADDED: For trapping enemies
         this.level = 1;
         this.tileSize = 32;
         this.gridWidth = Math.floor(this.canvas.width / this.tileSize);
@@ -237,7 +238,7 @@ class RadioactivityRunner {
             isOnGround: false,
             isClimbing: false,
             facingRight: true,
-            digCooldown: 0,  // FIXED: Added comma here
+            digCooldown: 0,
             invincibleTimer: 0
         };
 
@@ -277,7 +278,10 @@ class RadioactivityRunner {
             patrolRight: e.patrol.right * this.tileSize,
             direction: 1,
             speed: 1,
-            isFalling: false
+            isFalling: false,
+            trapped: false, // ADDED: For hole trapping
+            trapTimer: 0,   // ADDED: How long trapped
+            originalY: e.y * this.tileSize // ADDED: Original position
         }));
 
         // Create bricks (destructible blocks)
@@ -289,6 +293,9 @@ class RadioactivityRunner {
             destructible: b.destructible,
             health: b.destructible ? 3 : 100
         }));
+
+        // Reset holes
+        this.holes = [];
 
         // Reset game state
         GameState.goldCollected = 0;
@@ -333,11 +340,13 @@ class RadioactivityRunner {
             }
         });
 
-        
         // Update dig cooldown
         if (this.player.digCooldown > 0) {
             this.player.digCooldown -= deltaTime;
         }
+        
+        // Update holes
+        this.updateHoles(deltaTime);
         
         // Check collisions
         this.checkCollisions();
@@ -433,6 +442,17 @@ class RadioactivityRunner {
 
     updateEnemies(deltaTime) {
         this.enemies.forEach(enemy => {
+            // If enemy is trapped, don't move
+            if (enemy.trapped) {
+                enemy.trapTimer -= deltaTime;
+                if (enemy.trapTimer <= 0) {
+                    // Enemy escapes from hole
+                    enemy.trapped = false;
+                    enemy.y = enemy.originalY;
+                }
+                return;
+            }
+            
             // Simple patrol AI
             enemy.x += enemy.direction * enemy.speed;
             
@@ -459,6 +479,45 @@ class RadioactivityRunner {
         });
     }
 
+    // NEW METHOD: Update holes
+    updateHoles(deltaTime) {
+        for (let i = this.holes.length - 1; i >= 0; i--) {
+            const hole = this.holes[i];
+            
+            // Update hole timer
+            hole.timer -= deltaTime;
+            
+            // Check if enemies fall into this hole
+            if (hole.active) {
+                for (const enemy of this.enemies) {
+                    if (!enemy.trapped && this.isEnemyOverHole(enemy, hole)) {
+                        // Enemy falls into hole!
+                        enemy.trapped = true;
+                        enemy.trapTimer = 3.0; // Trapped for 3 seconds
+                        hole.active = false; // Hole is now "filled" with enemy
+                        hole.filledByEnemy = true;
+                        console.log(`Enemy trapped in hole at (${hole.x}, ${hole.y})`);
+                        break;
+                    }
+                }
+            }
+            
+            // Remove hole if timer expires
+            if (hole.timer <= 0) {
+                this.holes.splice(i, 1);
+            }
+        }
+    }
+
+    // NEW METHOD: Check if enemy is over a hole
+    isEnemyOverHole(enemy, hole) {
+        return enemy.x + enemy.width > hole.x &&
+               enemy.x < hole.x + hole.width &&
+               enemy.y + enemy.height > hole.y &&
+               Math.abs((enemy.y + enemy.height) - hole.y) < 10;
+    }
+
+    // UPDATED: Proper digging that creates holes
     playerDig() {
         // Prevent digging while on cooldown
         if (this.player.digCooldown > 0) return;
@@ -466,41 +525,64 @@ class RadioactivityRunner {
         // Set dig cooldown
         this.player.digCooldown = 0.5;
         
-        // Position to dig (in front of player)
+        // Position to dig (in front of player at ground level)
         const digX = this.player.x + (this.player.facingRight ? this.player.width : -this.tileSize);
-        const digY = this.player.y + this.player.height - 10; // Dig at feet level
+        const digY = this.player.y + this.player.height - 5; // At player's feet
         
-        // Check for destructible bricks at that position
+        // Check if we can dig here (must be on a platform)
+        let canDigHere = false;
+        let platformY = 0;
+        
+        for (const platform of this.platforms) {
+            // Check if player is standing on this platform
+            if (Math.abs((this.player.y + this.player.height) - platform.y) < 5 &&
+                digX >= platform.x && digX <= platform.x + platform.width) {
+                canDigHere = true;
+                platformY = platform.y;
+                break;
+            }
+        }
+        
+        if (!canDigHere) {
+            // Can't dig in mid-air
+            this.createParticles(digX, digY, 3, '#8B4513');
+            return;
+        }
+        
+        // Create a hole
+        this.holes.push({
+            x: digX,
+            y: platformY,
+            width: this.tileSize,
+            height: this.tileSize,
+            timer: 4.0, // Hole lasts 4 seconds
+            active: true,
+            filledByEnemy: false
+        });
+        
+        // Remove any brick at that location
         for (let i = this.bricks.length - 1; i >= 0; i--) {
             const brick = this.bricks[i];
-            
-            // Check if brick is at dig position AND is destructible
             if (brick.destructible && 
                 digX >= brick.x && digX <= brick.x + brick.width &&
                 digY >= brick.y && digY <= brick.y + brick.height) {
                 
-                // Remove the brick immediately
                 this.bricks.splice(i, 1);
-                
-                // Create particle effect
-                this.createParticles(
-                    brick.x + brick.width/2, 
-                    brick.y + brick.height/2, 
-                    10, 
-                    '#8B4513' // Brown color for dirt
-                );
-                
-                console.log(`Dug brick at (${Math.floor(digX)}, ${Math.floor(digY)})`);
-                return; // Exit after digging one brick
+                break;
             }
         }
         
-        // If no brick was found, still show digging animation
-        this.createParticles(digX, digY, 5, '#8B4513');
-        console.log(`Dug at empty space (${Math.floor(digX)}, ${Math.floor(digY)})`);
+        // Create particle effect
+        this.createParticles(
+            digX + this.tileSize/2, 
+            platformY + this.tileSize/2, 
+            15, 
+            '#8B4513'
+        );
+        
+        console.log(`Created hole at (${Math.floor(digX)}, ${platformY})`);
     }
 
-    // FIXED: Removed duplicate playerHit() method below - keeping only this one
     playerHit() {
         // Don't get hit while recently hit (invincibility frames)
         if (this.player.invincibleTimer > 0) return;
@@ -555,11 +637,10 @@ class RadioactivityRunner {
             }
         }
 
-        // ENEMY COLLISION - UPDATED VERSION
-        // Only check if player is NOT invincible
+        // ENEMY COLLISION - Only check if enemy is NOT trapped
         if (this.player.invincibleTimer <= 0) {
             for (const enemy of this.enemies) {
-                if (this.isColliding(this.player, enemy)) {
+                if (!enemy.trapped && this.isColliding(this.player, enemy)) {
                     this.playerHit();
                     break; // Only one hit per frame
                 }
@@ -826,24 +907,6 @@ class RadioactivityRunner {
         this.ctx.fillStyle = '#0a1929';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
-        // Draw grid (for debugging)
-        if (false) { // Set to true to see grid
-            this.ctx.strokeStyle = 'rgba(44, 83, 100, 0.3)';
-            this.ctx.lineWidth = 1;
-            for (let x = 0; x <= this.gridWidth; x++) {
-                this.ctx.beginPath();
-                this.ctx.moveTo(x * this.tileSize, 0);
-                this.ctx.lineTo(x * this.tileSize, this.canvas.height);
-                this.ctx.stroke();
-            }
-            for (let y = 0; y <= this.gridHeight; y++) {
-                this.ctx.beginPath();
-                this.ctx.moveTo(0, y * this.tileSize);
-                this.ctx.lineTo(this.canvas.width, y * this.tileSize);
-                this.ctx.stroke();
-            }
-        }
-        
         // Draw platforms
         this.ctx.fillStyle = '#2c5364';
         this.platforms.forEach(platform => {
@@ -861,7 +924,7 @@ class RadioactivityRunner {
         });
         
         // Draw ladders
-        this.ctx.fillStyle = '#8B4513'; // Brown
+        this.ctx.fillStyle = '#8B4513';
         this.ladders.forEach(ladder => {
             this.ctx.fillRect(ladder.x + 10, ladder.y, 12, ladder.height);
             
@@ -907,13 +970,37 @@ class RadioactivityRunner {
             }
         });
         
+        // Draw holes
+        this.holes.forEach(hole => {
+            if (hole.active) {
+                // Draw as dark rectangle (hole)
+                this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+                this.ctx.fillRect(hole.x, hole.y, hole.width, hole.height);
+                
+                // Draw crumbling edges
+                this.ctx.strokeStyle = '#8B4513';
+                this.ctx.lineWidth = 3;
+                this.ctx.strokeRect(hole.x, hole.y, hole.width, hole.height);
+            } else if (hole.filledByEnemy) {
+                // Hole with trapped enemy
+                this.ctx.fillStyle = 'rgba(139, 69, 19, 0.6)';
+                this.ctx.fillRect(hole.x, hole.y, hole.width, hole.height);
+                
+                // Draw struggling enemy in hole
+                this.ctx.fillStyle = '#FF416C';
+                this.ctx.fillRect(hole.x + 5, hole.y + 5, hole.width - 10, 10);
+                
+                this.ctx.fillStyle = '#000';
+                this.ctx.fillRect(hole.x + 10, hole.y + 7, 4, 4); // Eye
+            }
+        });
+        
         // Draw gold
         this.gold.forEach(goldPiece => {
             if (!goldPiece.collected) {
                 // Pulsing gold animation
                 const scale = 0.8 + Math.sin(goldPiece.animation) * 0.2;
                 const size = goldPiece.width * scale;
-                const offset = (goldPiece.width - size) / 2;
                 
                 // Gold gradient
                 const gradient = this.ctx.createRadialGradient(
@@ -952,6 +1039,11 @@ class RadioactivityRunner {
         
         // Draw enemies
         this.enemies.forEach(enemy => {
+            if (enemy.trapped) {
+                // Trapped enemy (already drawn in hole)
+                return;
+            }
+            
             // Enemy body
             this.ctx.fillStyle = '#FF416C';
             this.ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);

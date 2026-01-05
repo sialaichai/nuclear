@@ -235,6 +235,7 @@ class RadioactivityRunner {
             isClimbing: false,
             facingRight: true,
             digCooldown: 0
+            invincibleTimer: 0  // ADD THIS LINE
         };
 
         // Create platforms
@@ -328,6 +329,7 @@ class RadioactivityRunner {
                 g.animation = (g.animation + deltaTime * 5) % (Math.PI * 2);
             }
         });
+
         
         // Update dig cooldown
         if (this.player.digCooldown > 0) {
@@ -344,6 +346,10 @@ class RadioactivityRunner {
     }
 
     updatePlayer(deltaTime) {
+        // Update invincibility timer
+        if (this.player.invincibleTimer > 0) {
+            this.player.invincibleTimer -= deltaTime;
+        }
         // Horizontal movement
         this.player.velocityX = 0;
         
@@ -451,33 +457,86 @@ class RadioactivityRunner {
     }
 
     playerDig() {
+        // Prevent digging while on cooldown
         if (this.player.digCooldown > 0) return;
         
-        this.player.digCooldown = 0.5; // Half second cooldown
+        // Set dig cooldown
+        this.player.digCooldown = 0.5;
         
-        // Find brick in front of player
+        // Position to dig (in front of player)
         const digX = this.player.x + (this.player.facingRight ? this.player.width : -this.tileSize);
-        const digY = this.player.y + this.player.height / 2;
+        const digY = this.player.y + this.player.height - 10; // Dig at feet level
         
-        for (let i = 0; i < this.bricks.length; i++) {
+        // Check for destructible bricks at that position
+        for (let i = this.bricks.length - 1; i >= 0; i--) {
             const brick = this.bricks[i];
+            
+            // Check if brick is at dig position AND is destructible
             if (brick.destructible && 
                 digX >= brick.x && digX <= brick.x + brick.width &&
                 digY >= brick.y && digY <= brick.y + brick.height) {
                 
-                brick.health--;
-                if (brick.health <= 0) {
-                    this.bricks.splice(i, 1);
-                    // Create falling animation
-                    setTimeout(() => {
-                        // Brick disappears
-                    }, 300);
-                }
-                break;
+                // Remove the brick immediately
+                this.bricks.splice(i, 1);
+                
+                // Create particle effect
+                this.createParticles(
+                    brick.x + brick.width/2, 
+                    brick.y + brick.height/2, 
+                    10, 
+                    '#8B4513' // Brown color for dirt
+                );
+                
+                // Play sound effect (if you add sounds later)
+                // this.playSound('dig');
+                
+                console.log(`Dug brick at (${Math.floor(digX)}, ${Math.floor(digY)})`);
+                return; // Exit after digging one brick
             }
         }
+        
+        // If no brick was found, still show digging animation
+        this.createParticles(digX, digY, 5, '#8B4513');
+        console.log(`Dug at empty space (${Math.floor(digX)}, ${Math.floor(digY)})`);
     }
 
+
+    // Add this new method to handle player being hit
+    playerHit() {
+        // Don't get hit while recently hit (invincibility frames)
+        if (this.player.invincibleTimer > 0) return;
+        
+        // Reduce lives
+        GameState.lives--;
+        document.getElementById('lives').textContent = GameState.lives;
+        
+        // Set invincibility timer (1 second)
+        this.player.invincibleTimer = 1.0;
+        
+        // Reset player position
+        const design = this.levelDesigns[this.level];
+        this.player.x = design.start.x * this.tileSize;
+        this.player.y = design.start.y * this.tileSize;
+        this.player.velocityX = 0;
+        this.player.velocityY = 0;
+        
+        // Visual feedback (red particles)
+        this.createParticles(
+            this.player.x + this.player.width/2, 
+            this.player.y + this.player.height/2, 
+            15, 
+            '#FF416C'
+        );
+        
+        // Game over check
+        if (GameState.lives <= 0) {
+            setTimeout(() => this.gameOver(), 500);
+        }
+        
+        console.log(`Player hit! Lives: ${GameState.lives}`);
+    }
+
+    
     checkCollisions() {
         // Gold collection
         for (let i = 0; i < this.gold.length; i++) {
@@ -497,14 +556,19 @@ class RadioactivityRunner {
                 break;
             }
         }
-        
-        // Enemy collision
-        for (const enemy of this.enemies) {
-            if (this.isColliding(this.player, enemy)) {
-                this.playerHit();
-                break;
+
+    // ENEMY COLLISION - UPDATED VERSION
+        // Only check if player is NOT invincible
+        if (this.player.invincibleTimer <= 0) {
+            for (const enemy of this.enemies) {
+                if (this.isColliding(this.player, enemy)) {
+                    this.playerHit();
+                    break; // Only one hit per frame
+                }
             }
         }
+        
+      
     }
 
     askQuestion() {

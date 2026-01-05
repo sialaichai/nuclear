@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radioactivity Runner - Educational Game</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="game-container">
+        <!-- Start Screen -->
+        <div id="start-screen" class="screen active">
+            <div class="start-content">
+                <h1><i class="fas fa-radiation"></i> Radioactivity Runner</h1>
+                <p class="subtitle">Master Radioactivity Concepts through Gameplay!</p>
+                
+                <div class="bloom-levels">
+                    <div class="bloom-card" data-level="1">
+                        <h3>Level 1: Remembering</h3>
+                        <p>Recall basic facts & terms</p>
+                        <div class="progress-circle" id="progress-1">0%</div>
+                    </div>
+                    <div class="bloom-card" data-level="2">
+                        <h3>Level 2: Understanding</h3>
+                        <p>Explain concepts in your own words</p>
+                        <div class="progress-circle" id="progress-2">0%</div>
+                    </div>
+                    <div class="bloom-card" data-level="3">
+                        <h3>Level 3: Applying</h3>
+                        <p>Use formulas to solve problems</p>
+                        <div class="progress-circle" id="progress-3">0%</div>
+                    </div>
+                    <div class="bloom-card" data-level="4">
+                        <h3>Level 4: Analyzing</h3>
+                        <p>Compare & analyze radiation types</p>
+                        <div class="progress-circle" id="progress-4">0%</div>
+                    </div>
+                    <div class="bloom-card" data-level="5">
+                        <h3>Level 5: Evaluating</h3>
+                        <p>Design & evaluate safety protocols</p>
+                        <div class="progress-circle" id="progress-5">0%</div>
+                    </div>
+                </div>
+                
+                <div class="player-stats">
+                    <div class="stat">
+                        <span class="stat-label">Score:</span>
+                        <span id="total-score">0</span>
+                    </div>
+                    <div class="stat">
+                        <span class="stat-label">Knowledge:</span>
+                        <div class="knowledge-bar">
+                            <div class="knowledge-fill" id="knowledge-fill"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="controls">
+                    <button id="start-game" class="btn-primary">
+                        <i class="fas fa-play"></i> Start Game
+                    </button>
+                    <button id="how-to-play" class="btn-secondary">
+                        <i class="fas fa-question-circle"></i> How to Play
+                    </button>
+                    <button id="reset-progress" class="btn-warning">
+                        <i class="fas fa-redo"></i> Reset Progress
+                    </button>
+                </div>
+                
+                <div class="instructions">
+                    <h3><i class="fas fa-graduation-cap"></i> Educational Goals:</h3>
+                    <ul>
+                        <li>Master 5 levels of Bloom's Taxonomy</li>
+                        <li>Understand radioactivity concepts</li>
+                        <li>Apply formulas in problem-solving</li>
+                        <li>Analyze real-world scenarios</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <div class="game-header">
+                <div class="game-stats">
+                    <div class="stat-item">
+                        <i class="fas fa-bolt"></i>
+                        <span>Score: <span id="current-score">0</span></span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-brain"></i>
+                        <span>Level: <span id="current-level">1</span></span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-heart"></i>
+                        <span>Lives: <span id="lives">3</span></span>
+                    </div>
+                    <div class="stat-item">
+                        <i class="fas fa-radiation"></i>
+                        <span>Gold: <span id="gold-count">0</span>/<span id="gold-total">5</span></span>
+                    </div>
+                </div>
+                <button id="pause-game" class="btn-small">
+                    <i class="fas fa-pause"></i> Pause
+                </button>
+            </div>
+            
+            <div class="game-area">
+                <canvas id="game-canvas" width="800" height="500"></canvas>
+                
+                <!-- Question Modal -->
+                <div id="question-modal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 id="question-title">Question</h3>
+                            <span class="bloom-badge" id="bloom-badge">Level 1</span>
+                        </div>
+                        <div class="modal-body">
+                            <p id="question-text">Loading question...</p>
+                            <div id="options-container" class="options-grid"></div>
+                            <div id="hint-area" class="hint-area" style="display: none;">
+                                <p id="hint-text"></p>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button id="submit-answer" class="btn-primary" disabled>
+                                Submit Answer
+                            </button>
+                            <button id="use-hint" class="btn-secondary">
+                                <i class="fas fa-lightbulb"></i> Get Hint (Cost: 10 points)
+                            </button>
+                            <button id="skip-question" class="btn-warning">
+                                Skip Question
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Feedback Modal -->
+                <div id="feedback-modal" class="modal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3 id="feedback-title"></h3>
+                        </div>
+                        <div class="modal-body">
+                            <div id="feedback-icon"></div>
+                            <p id="feedback-text"></p>
+                            <div id="explanation" class="explanation-box"></div>
+                            <div class="score-change">
+                                Score Change: <span id="score-change">0</span>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button id="continue-game" class="btn-primary">
+                                Continue
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="game-controls">
+                <div class="control-info">
+                    <p><strong>Controls:</strong> Arrow Keys to move, Space to dig</p>
+                    <p><strong>Goal:</strong> Collect all radioactive gold while answering questions!</p>
+                </div>
+                <button id="back-to-menu" class="btn-secondary">
+                    <i class="fas fa-home"></i> Back to Menu
+                </button>
+            </div>
+        </div>
+        
+        <!-- Game Over Screen -->
+        <div id="game-over-screen" class="screen">
+            <div class="game-over-content">
+                <h2><i class="fas fa-trophy"></i> Level Complete!</h2>
+                <div class="results-summary">
+                    <div class="result-item">
+                        <span class="result-label">Final Score:</span>
+                        <span class="result-value" id="final-score">0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Questions Correct:</span>
+                        <span class="result-value" id="questions-correct">0/0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Time Taken:</span>
+                        <span class="result-value" id="time-taken">0s</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Knowledge Gained:</span>
+                        <div class="result-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="knowledge-gained"></div>
+                            </div>
+                            <span id="knowledge-percent">0%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bloom-progress">
+                    <h3>Bloom's Taxonomy Progress</h3>
+                    <div class="progress-grid">
+                        <!-- Progress bars will be inserted here by JS -->
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button id="next-level" class="btn-primary">
+                        <i class="fas fa-arrow-right"></i> Next Level
+                    </button>
+                    <button id="replay-level" class="btn-secondary">
+                        <i class="fas fa-redo"></i> Replay Level
+                    </button>
+                    <button id="return-to-menu" class="btn-warning">
+                        <i class="fas fa-home"></i> Main Menu
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- How to Play Modal -->
+    <div id="instructions-modal" class="modal">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h2><i class="fas fa-book"></i> How to Play & Educational Goals</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="instruction-section">
+                    <h3><i class="fas fa-gamepad"></i> Game Controls</h3>
+                    <ul>
+                        <li><strong>Arrow Keys:</strong> Move your character (Up to climb ladders)</li>
+                        <li><strong>Spacebar:</strong> Dig left/right (to trap enemies or create paths)</li>
+                        <li><strong>ESC:</strong> Pause game</li>
+                    </ul>
+                </div>
+                
+                <div class="instruction-section">
+                    <h3><i class="fas fa-bullseye"></i> Game Objective</h3>
+                    <p>Collect all radioactive gold pieces in each level while answering questions about radioactivity.</p>
+                    <p>Each gold piece triggers a question based on Bloom's Taxonomy levels.</p>
+                </div>
+                
+                <div class="instruction-section">
+                    <h3><i class="fas fa-graduation-cap"></i> Bloom's Taxonomy Levels</h3>
+                    <div class="bloom-instructions">
+                        <div class="bloom-step">
+                            <h4>Level 1: Remembering</h4>
+                            <p>Recall basic facts about radioactivity, decay types, and terminology.</p>
+                        </div>
+                        <div class="bloom-step">
+                            <h4>Level 2: Understanding</h4>
+                            <p>Explain concepts in your own words and interpret decay chains.</p>
+                        </div>
+                        <div class="bloom-step">
+                            <h4>Level 3: Applying</h4>
+                            <p>Use formulas to calculate half-life, decay constants, and remaining mass.</p>
+                        </div>
+                        <div class="bloom-step">
+                            <h4>Level 4: Analyzing</h4>
+                            <p>Compare radiation types, analyze graphs, and identify patterns.</p>
+                        </div>
+                        <div class="bloom-step">
+                            <h4>Level 5: Evaluating</h4>
+                            <p>Design experiments and evaluate safety protocols for radiation.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="instruction-section">
+                    <h3><i class="fas fa-star"></i> Scoring System</h3>
+                    <ul>
+                        <li><strong>Correct Answer:</strong> +100 points + bonus for speed</li>
+                        <li><strong>Wrong Answer:</strong> -25 points (but learn from explanation)</li>
+                        <li><strong>Gold Collected:</strong> +50 points each</li>
+                        <li><strong>Level Completion:</strong> +500 points + time bonus</li>
+                        <li><strong>Hint Used:</strong> -10 points per hint</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-primary close-modal">Let's Play!</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="questions.js"></script>
+    <script src="game.js"></script>
+</body>
+</html>

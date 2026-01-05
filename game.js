@@ -61,7 +61,10 @@ class RadioactivityRunner {
             this.keys[e.key] = false;
         });
 
-       
+        // FIXED: Add missing start-game event listener
+        document.getElementById('start-game').addEventListener('click', () => {
+            this.startGame();
+        });
 
         document.getElementById('how-to-play').addEventListener('click', () => {
             document.getElementById('instructions-modal').style.display = 'block';
@@ -234,8 +237,8 @@ class RadioactivityRunner {
             isOnGround: false,
             isClimbing: false,
             facingRight: true,
-            digCooldown: 0
-            invincibleTimer: 0  // ADD THIS LINE
+            digCooldown: 0,  // FIXED: Added comma here
+            invincibleTimer: 0
         };
 
         // Create platforms
@@ -487,9 +490,6 @@ class RadioactivityRunner {
                     '#8B4513' // Brown color for dirt
                 );
                 
-                // Play sound effect (if you add sounds later)
-                // this.playSound('dig');
-                
                 console.log(`Dug brick at (${Math.floor(digX)}, ${Math.floor(digY)})`);
                 return; // Exit after digging one brick
             }
@@ -500,8 +500,7 @@ class RadioactivityRunner {
         console.log(`Dug at empty space (${Math.floor(digX)}, ${Math.floor(digY)})`);
     }
 
-
-    // Add this new method to handle player being hit
+    // FIXED: Removed duplicate playerHit() method below - keeping only this one
     playerHit() {
         // Don't get hit while recently hit (invincibility frames)
         if (this.player.invincibleTimer > 0) return;
@@ -535,7 +534,6 @@ class RadioactivityRunner {
         
         console.log(`Player hit! Lives: ${GameState.lives}`);
     }
-
     
     checkCollisions() {
         // Gold collection
@@ -557,7 +555,7 @@ class RadioactivityRunner {
             }
         }
 
-    // ENEMY COLLISION - UPDATED VERSION
+        // ENEMY COLLISION - UPDATED VERSION
         // Only check if player is NOT invincible
         if (this.player.invincibleTimer <= 0) {
             for (const enemy of this.enemies) {
@@ -567,8 +565,6 @@ class RadioactivityRunner {
                 }
             }
         }
-        
-      
     }
 
     askQuestion() {
@@ -704,28 +700,6 @@ class RadioactivityRunner {
         
         this.hideModal('question-modal');
         this.gameState = 'playing';
-    }
-
-    playerHit() {
-        GameState.lives--;
-        document.getElementById('lives').textContent = GameState.lives;
-        
-        // Reset player position
-        const design = this.levelDesigns[this.level];
-        this.player.x = design.start.x * this.tileSize;
-        this.player.y = design.start.y * this.tileSize;
-        this.player.velocityX = 0;
-        this.player.velocityY = 0;
-        
-        // Visual feedback
-        this.createParticles(this.player.x + this.player.width/2, 
-                           this.player.y + this.player.height/2, 
-                           15, '#FF416C');
-        
-        // Game over check
-        if (GameState.lives <= 0) {
-            this.gameOver();
-        }
     }
 
     levelComplete() {

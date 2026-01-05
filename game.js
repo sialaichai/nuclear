@@ -93,24 +93,39 @@ class RadioactivityRunner {
         
         // FIXED: Add missing start-game event listener
         document.getElementById('start-game').addEventListener('click', () => {
+            if (this.soundManager) {
+                this.soundManager.play('button');
+            }
             this.startGame();
         });
 
         document.getElementById('how-to-play').addEventListener('click', () => {
+            if (this.soundManager) {
+                this.soundManager.play('button');
+            }
             document.getElementById('instructions-modal').style.display = 'block';
         });
 
         document.getElementById('reset-progress').addEventListener('click', () => {
+            if (this.soundManager) {
+                this.soundManager.play('button');
+            }
             if (confirm('Are you sure you want to reset all progress?')) {
                 resetGameState();
             }
         });
 
         document.getElementById('pause-game').addEventListener('click', () => {
+            if (this.soundManager) {
+                this.soundManager.play('button');
+            }
             this.togglePause();
         });
 
         document.getElementById('back-to-menu').addEventListener('click', () => {
+            if (this.soundManager) {
+                this.soundManager.play('button');
+            }
             if (confirm('Return to menu? Progress will be saved.')) {
                 this.showScreen('start-screen');
                 saveGameProgress();
@@ -119,6 +134,9 @@ class RadioactivityRunner {
         });
 
         document.getElementById('next-level').addEventListener('click', () => {
+            if (this.soundManager) {
+                this.soundManager.play('button');
+            }
             if (GameState.currentLevel < 5) {
                 GameState.currentLevel++;
                 this.startGame();
@@ -128,10 +146,16 @@ class RadioactivityRunner {
         });
 
         document.getElementById('replay-level').addEventListener('click', () => {
+            if (this.soundManager) {
+                this.soundManager.play('button');
+            }
             this.startGame();
         });
 
         document.getElementById('return-to-menu').addEventListener('click', () => {
+            if (this.soundManager) {
+                this.soundManager.play('button');
+            }
             this.showScreen('start-screen');
             saveGameProgress();
             updateUI();
@@ -139,18 +163,30 @@ class RadioactivityRunner {
 
         // Question modal events
         document.getElementById('submit-answer').addEventListener('click', () => {
+            if (this.soundManager) {
+                this.soundManager.play('button');
+            }
             this.submitAnswer();
         });
 
         document.getElementById('use-hint').addEventListener('click', () => {
+            if (this.soundManager) {
+                this.soundManager.play('button');
+            }
             this.useHint();
         });
 
         document.getElementById('skip-question').addEventListener('click', () => {
+            if (this.soundManager) {
+                this.soundManager.play('button');
+            }
             this.skipQuestion();
         });
 
         document.getElementById('continue-game').addEventListener('click', () => {
+            if (this.soundManager) {
+                this.soundManager.play('button');
+            }
             this.hideModal('feedback-modal');
         });
 

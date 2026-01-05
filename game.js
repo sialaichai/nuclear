@@ -61,10 +61,7 @@ class RadioactivityRunner {
             this.keys[e.key] = false;
         });
 
-        // UI Button event listeners
-        document.getElementById('start-game').addEventListener('click', () => {
-            this.startGame();
-        });
+       
 
         document.getElementById('how-to-play').addEventListener('click', () => {
             document.getElementById('instructions-modal').style.display = 'block';

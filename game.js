@@ -46,6 +46,7 @@ class RadioactivityRunner {
     }
 
     setupEventListeners() {
+            
         // Keyboard controls
         window.addEventListener('keydown', (e) => {
             this.keys[e.key] = true;
@@ -65,6 +66,31 @@ class RadioactivityRunner {
             this.keys[e.key] = false;
         });
 
+        // Sound control events
+        document.getElementById('mute-toggle').addEventListener('click', () => {
+            if (this.soundManager) {
+                const isMuted = this.soundManager.toggleMute();
+                const icon = document.querySelector('#mute-toggle i');
+                const text = document.querySelector('#mute-toggle');
+                
+                if (isMuted) {
+                    icon.className = 'fas fa-volume-mute';
+                    text.innerHTML = '<i class="fas fa-volume-mute"></i> Unmute';
+                } else {
+                    icon.className = 'fas fa-volume-up';
+                    text.innerHTML = '<i class="fas fa-volume-up"></i> Mute';
+                }
+            }
+        });
+
+        document.getElementById('volume-slider').addEventListener('input', (e) => {
+            if (this.soundManager) {
+                const volume = parseInt(e.target.value) / 100;
+                this.soundManager.setVolume(volume, volume * 0.9);
+            }
+        });
+
+        
         // FIXED: Add missing start-game event listener
         document.getElementById('start-game').addEventListener('click', () => {
             this.startGame();

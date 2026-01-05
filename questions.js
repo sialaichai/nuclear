@@ -542,3 +542,34 @@ function updateUI() {
     document.getElementById('current-level').textContent = GameState.currentLevel;
     document.getElementById('lives').textContent = GameState.lives;
 }
+
+// Sound utility functions
+function playSound(soundName) {
+    if (typeof soundManager !== 'undefined') {
+        soundManager.play(soundName);
+    }
+}
+
+function playBGM(bgmName) {
+    if (typeof soundManager !== 'undefined') {
+        soundManager.playBGM(bgmName);
+    }
+}
+
+function stopBGM() {
+    if (typeof soundManager !== 'undefined') {
+        soundManager.stopBGM();
+    }
+}
+
+function pauseBGM() {
+    if (typeof soundManager !== 'undefined') {
+        soundManager.pauseBGM();
+    }
+}
+
+function resumeBGM() {
+    if (typeof soundManager !== 'undefined') {
+        soundManager.resumeBGM();
+    }
+}

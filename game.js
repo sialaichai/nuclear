@@ -20,7 +20,7 @@ class RadioactivityRunner {
         this.lastTime = 0;
         this.levelDesigns = {};
         this.currentQuestion = null;
-        
+        this.soundManager = null; // Will be initialized later
         this.init();
     }
 
@@ -28,6 +28,9 @@ class RadioactivityRunner {
         // Load saved progress
         loadGameProgress();
         updateUI();
+
+        // Initialize sound manager
+        this.soundManager = soundManager;
         
         // Initialize level designs
         this.createLevelDesigns();
@@ -224,6 +227,16 @@ class RadioactivityRunner {
     startGame() {
         this.level = GameState.currentLevel;
         const design = this.levelDesigns[this.level];
+    
+            // Play stage start sound
+        if (this.soundManager) {
+            this.soundManager.play('stageStart');
+            
+            // Start main BGM after a short delay
+            setTimeout(() => {
+                this.soundManager.playBGM('mainBGM');
+            }, 1500);
+        }
         
         // Reset game objects
         this.player = {
@@ -521,7 +534,11 @@ class RadioactivityRunner {
     playerDig() {
         // Prevent digging while on cooldown
         if (this.player.digCooldown > 0) return;
-        
+
+        // Play dig sound
+        if (this.soundManager) {
+            this.soundManager.play('dig');
+        }
         // Set dig cooldown
         this.player.digCooldown = 0.5;
         
@@ -586,6 +603,11 @@ class RadioactivityRunner {
     playerHit() {
         // Don't get hit while recently hit (invincibility frames)
         if (this.player.invincibleTimer > 0) return;
+
+         // Play hit sound
+        if (this.soundManager) {
+            this.soundManager.play('hit');
+        }
         
         // Reduce lives
         GameState.lives--;
@@ -625,6 +647,10 @@ class RadioactivityRunner {
                 goldPiece.collected = true;
                 GameState.goldCollected++;
                 GameState.score += 50;
+
+                if (this.soundManager) {
+                    this.soundManager.play('gold');
+                }
                 document.getElementById('gold-count').textContent = GameState.goldCollected;
                 document.getElementById('current-score').textContent = GameState.score;
                 
@@ -634,6 +660,15 @@ class RadioactivityRunner {
                 // Visual feedback
                 this.createParticles(goldPiece.x + goldPiece.width/2, goldPiece.y + goldPiece.height/2, 10, '#FFD700');
                 break;
+                
+                // Check if all gold collected
+                if (GameState.goldCollected >= this.levelDesigns[this.level].totalGold) {
+                    // Play all gold collected sound
+                    if (this.soundManager) {
+                        this.soundManager.play('allGold');
+                    }
+                }
+                    
             }
         }
 
@@ -650,6 +685,10 @@ class RadioactivityRunner {
 
     askQuestion() {
         if (this.gameState !== 'playing') return;
+        // Pause main BGM when question appears
+        if (this.soundManager) {
+            this.soundManager.pauseBGM();
+        }
         
         this.gameState = 'paused';
         this.currentQuestion = getRandomQuestion(this.level);
@@ -705,6 +744,15 @@ class RadioactivityRunner {
         if (GameState.selectedAnswer === null) return;
         
         const isCorrect = GameState.selectedAnswer === GameState.currentQuestion.correctAnswer;
+        // Play answer feedback sound
+        if (this.soundManager) {
+            if (isCorrect) {
+                this.soundManager.play('correct');
+            } else {
+                this.soundManager.play('wrong');
+            }
+        }
+        
         GameState.totalQuestionsAnswered++;
         
         // Calculate score
@@ -781,11 +829,19 @@ class RadioactivityRunner {
         
         this.hideModal('question-modal');
         this.gameState = 'playing';
+        // Resume BGM since question was skipped
+        if (this.soundManager) {
+            this.soundManager.resumeBGM();
+        }
     }
 
     levelComplete() {
         this.gameState = 'gameOver';
-        
+        // Play stage clear sound
+        if (this.soundManager) {
+            this.soundManager.stopBGM(); // Stop main BGM
+            this.soundManager.play('stageClear');
+        }
         // Calculate final score with time bonus
         const timeBonus = Math.max(0, 1000 - Math.floor(this.gameTime * 10));
         const completionBonus = 500;
@@ -833,6 +889,11 @@ class RadioactivityRunner {
     }
 
     gameOver() {
+            // Play game over sound
+        if (this.soundManager) {
+            this.soundManager.stopBGM(); // Stop main BGM
+            this.soundManager.play('gameOver');
+        }
         alert('Game Over! Try again.');
         this.startGame(); // Restart current level
     }
@@ -854,6 +915,17 @@ class RadioactivityRunner {
         });
         document.getElementById(screenId).classList.add('active');
         this.gameState = screenId === 'game-screen' ? 'playing' : 'menu';
+
+        // Handle sound based on screen
+        if (this.soundManager) {
+            if (screenId === 'start-screen') {
+                this.soundManager.playBGM('title');
+            } else if (screenId === 'game-screen') {
+                // BGM already handled in startGame()
+            } else if (screenId === 'game-over-screen') {
+                // Already handled in levelComplete()
+            }
+        }
     }
 
     showModal(modalId) {
@@ -864,6 +936,10 @@ class RadioactivityRunner {
         document.getElementById(modalId).classList.remove('active');
         if (modalId === 'feedback-modal') {
             this.gameState = 'playing';
+            // Resume main BGM after question is answered
+            if (this.soundManager && this.gameState === 'playing') {
+                this.soundManager.resumeBGM();
+            }
         }
     }
 

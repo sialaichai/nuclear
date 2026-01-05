@@ -20,6 +20,7 @@ class RadioactivityRunner {
         this.lastTime = 0;
         this.levelDesigns = {};
         this.currentQuestion = null;
+        this.allGoldCollected = false; // Add this line
         this.soundManager = null; // Will be initialized later
         this.init();
     }
@@ -289,7 +290,8 @@ class RadioactivityRunner {
     startGame() {
         this.level = GameState.currentLevel;
         const design = this.levelDesigns[this.level];
-    
+            // Reset the all gold collected flag
+        this.allGoldCollected = false;
             // Play stage start sound
         if (this.soundManager) {
             this.soundManager.play('stageStart');
@@ -709,10 +711,12 @@ class RadioactivityRunner {
                 goldPiece.collected = true;
                 GameState.goldCollected++;
                 GameState.score += 50;
-
+                
+                // Play gold collection sound
                 if (this.soundManager) {
                     this.soundManager.play('gold');
                 }
+                
                 document.getElementById('gold-count').textContent = GameState.goldCollected;
                 document.getElementById('current-score').textContent = GameState.score;
                 
@@ -721,19 +725,21 @@ class RadioactivityRunner {
                 
                 // Visual feedback
                 this.createParticles(goldPiece.x + goldPiece.width/2, goldPiece.y + goldPiece.height/2, 10, '#FFD700');
-                break;
                 
-                // Check if all gold collected
+                // Check if ALL gold collected - but DON'T show success yet
                 if (GameState.goldCollected >= this.levelDesigns[this.level].totalGold) {
-                    // Play all gold collected sound
+                    // Set a flag to show success after question is answered
+                    this.allGoldCollected = true;
+                    
+                    // Play special sound for last gold
                     if (this.soundManager) {
                         this.soundManager.play('allGold');
                     }
                 }
-                    
+                break;
             }
         }
-
+    
         // ENEMY COLLISION - Only check if enemy is NOT trapped
         if (this.player.invincibleTimer <= 0) {
             for (const enemy of this.enemies) {
@@ -744,7 +750,6 @@ class RadioactivityRunner {
             }
         }
     }
-
     askQuestion() {
         if (this.gameState !== 'playing') return;
         // Pause main BGM when question appears
@@ -806,6 +811,7 @@ class RadioactivityRunner {
         if (GameState.selectedAnswer === null) return;
         
         const isCorrect = GameState.selectedAnswer === GameState.currentQuestion.correctAnswer;
+        
         // Play answer feedback sound
         if (this.soundManager) {
             if (isCorrect) {
@@ -859,15 +865,33 @@ class RadioactivityRunner {
         updateUI();
         document.getElementById('current-score').textContent = GameState.score;
         
+        // Check if this was the last gold's question AND answer was correct
+        if (this.allGoldCollected && isCorrect) {
+            // Update feedback to show level completion
+            document.getElementById('feedback-title').textContent = 'Level Complete!';
+            document.getElementById('feedback-text').textContent = 
+                `Perfect! You answered correctly and completed the level!`;
+            
+            // Add level completion message to explanation
+            document.getElementById('explanation').innerHTML += 
+                '<br><br><strong>🎉 Level Complete! 🎉</strong>';
+        }
+        
         // Show feedback and hide question
         this.hideModal('question-modal');
-        this.showModal('feedback-modal');
+        
+        // If all gold collected AND answer was correct, show level success
+        if (this.allGoldCollected && isCorrect) {
+            // Delay slightly to let feedback modal close
+            setTimeout(() => {
+                this.levelComplete();
+            }, 100);
+        }
         
         // Reset for next question
         GameState.selectedAnswer = null;
         GameState.currentQuestion = null;
     }
-
     useHint() {
         if (!GameState.currentQuestion || GameState.score < 10) {
             alert('You need at least 10 points to use a hint!');
@@ -891,6 +915,16 @@ class RadioactivityRunner {
         
         this.hideModal('question-modal');
         this.gameState = 'playing';
+        
+        // If all gold was collected but question was skipped,
+        // we still need to check level completion
+        if (this.allGoldCollected) {
+            // Even if skipped, level is complete (player collected all gold)
+            setTimeout(() => {
+                this.levelComplete();
+            }, 100);
+        }
+        
         // Resume BGM since question was skipped
         if (this.soundManager) {
             this.soundManager.resumeBGM();
@@ -898,12 +932,17 @@ class RadioactivityRunner {
     }
 
     levelComplete() {
+        // Reset the flag
+        this.allGoldCollected = false;
+        
         this.gameState = 'gameOver';
+        
         // Play stage clear sound
         if (this.soundManager) {
             this.soundManager.stopBGM(); // Stop main BGM
             this.soundManager.play('stageClear');
         }
+        
         // Calculate final score with time bonus
         const timeBonus = Math.max(0, 1000 - Math.floor(this.gameTime * 10));
         const completionBonus = 500;

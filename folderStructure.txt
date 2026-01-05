@@ -1,0 +1,20 @@
+radioactivity-runner/
+├── sounds/
+│   ├── title-screen.mp3
+│   ├── stage-start.mp3
+│   ├── main-bgm.mp3
+│   ├── all-gold-collected.mp3
+│   ├── stage-clear.mp3
+│   ├── miss.mp3
+│   ├── game-over.mp3
+│   ├── correct-answer.mp3
+│   ├── wrong-answer.mp3
+│   ├── dig.mp3
+│   ├── gold-collect.mp3
+│   ├── hit.mp3
+│   └── button-click.mp3
+├── index.html
+├── style.css
+├── game.js
+├── questions.js
+└── sound.js

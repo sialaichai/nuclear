@@ -385,7 +385,7 @@ class RadioactivityRunner {
         }
         
         // Jump
-        if ((this.keys['ArrowUp'] || this.keys['w'] || this.keys[' ']) && this.player.isOnGround && !this.player.isClimbing) {
+        if ((this.keys['ArrowUp'] || this.keys['w']) && this.player.isOnGround && !this.player.isClimbing) {
             this.player.velocityY = this.player.jumpForce;
             this.player.isOnGround = false;
         }

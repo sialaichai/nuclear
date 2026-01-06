@@ -1,4 +1,12 @@
 // Main Game Engine
+
+const BG_DECORATIONS = [
+    "E = mc²", "α", "β", "γ", "N(t) = N₀e⁻λt", 
+    "A = λN", "T½ = ln(2)/λ", "²³⁵U + n → Fission", 
+    "²H + ³H → ⁴He + n", "Bq", "Sv", "Gy", "Ci",
+    "∫", "∑", "∂x", "☢", "⚛", "⚡", "H = D × Q"
+];
+
 class RadioactivityRunner {
     constructor() {
         this.canvas = document.getElementById('game-canvas');
@@ -339,6 +347,8 @@ class RadioactivityRunner {
         const design = this.levelDesigns[this.level];
             // Reset the all gold collected flag
         this.allGoldCollected = false;
+
+        this.generateBackground();
             // Play stage start sound
         if (this.soundManager) {
             this.soundManager.play('stageStart');
@@ -1137,10 +1147,48 @@ class RadioactivityRunner {
                a.y + a.height > b.y;
     }
 
+    // Add this method inside the class
+    generateBackground() {
+        this.bgElements = [];
+        const density = 25; // Number of symbols to scatter
+        
+        for (let i = 0; i < density; i++) {
+            this.bgElements.push({
+                text: BG_DECORATIONS[Math.floor(Math.random() * BG_DECORATIONS.length)],
+                x: Math.random() * this.canvas.width,
+                y: Math.random() * this.canvas.height,
+                size: 20 + Math.random() * 60,      // Random font size (20px - 80px)
+                opacity: 0.03 + Math.random() * 0.07, // Very faint (3% - 10% opacity)
+                rotation: (Math.random() - 0.5) * 0.5 // Slight tilt
+            });
+        }
+    }
+    
     render() {
         // Clear canvas
         this.ctx.fillStyle = '#0a1929';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // --- ADD THIS BLOCK TO DRAW BACKGROUND ---
+        if (this.bgElements) {
+            this.ctx.save();
+            this.bgElements.forEach(el => {
+                this.ctx.fillStyle = `rgba(0, 201, 255, ${el.opacity})`; // Cyan color with low opacity
+                this.ctx.font = `bold ${el.size}px Arial`;
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                
+                // Handle rotation
+                this.ctx.translate(el.x, el.y);
+                this.ctx.rotate(el.rotation);
+                this.ctx.fillText(el.text, 0, 0);
+                
+                // Reset transformation for next item
+                this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+            });
+            this.ctx.restore();
+        }
+
         
         // Draw platforms
         this.ctx.fillStyle = '#2c5364';

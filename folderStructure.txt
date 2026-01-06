@@ -15,7 +15,21 @@ radioactivity-runner/
 │   └── button-click.mp3
 ├── index.html
 ├── style.css
-├── game.js
+├── core/
+│   ├── GameEngine.js      (Main game loop, state management)
+│   ├── Player.js          (Player movement, physics)
+│   ├── EnemyAI.js         (Enemy behavior, AI)
+│   ├── LevelManager.js    (Level loading, design)
+│   └── CollisionSystem.js (Collision detection)
+├── ui/
+│   ├── UIManager.js       (UI updates, screen switching)
+│   ├── QuestionManager.js (Question handling)
+│   └── ModalManager.js    (Modal windows)
+├── utils/
+│   ├── SoundManager.js    (Already have sound.js)
+│   ├── ParticleSystem.js  (Particle effects)
+│   └── StorageManager.js  (LocalStorage handling)
+├── game.js                (Main entry point - much smaller)
 ├── questions/
 │   ├── level1.js  (Remembering)
 │   ├── level2.js  (Understanding)

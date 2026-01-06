@@ -1,60 +1,63 @@
-// game.js - Updated to use all modules
+// game.js - Minimal Main Entry Point
 class RadioactivityRunner {
     constructor() {
+        // Get canvas
         this.canvas = document.getElementById('game-canvas');
-        this.soundManager = soundManager;
+        if (!this.canvas) {
+            console.error('Canvas element not found!');
+            return;
+        }
         
-        // Initialize all managers
-        this.storageManager = storageManager;
-        this.uiManager = new UIManager(null, this.soundManager); // Will update after gameEngine
-        this.modalManager = new ModalManager(this.soundManager);
+        // Get managers from global scope
+        this.soundManager = window.soundManager;
+        this.storageManager = window.storageManager;
         
         // Initialize core engine
         this.gameEngine = new GameEngine(this.canvas, this.soundManager);
         
-        // Update uiManager with gameEngine reference
-        this.uiManager.gameEngine = this.gameEngine;
-        
-        // Initialize other modules
+        // Initialize other managers
         this.levelManager = new LevelManager();
         this.questionManager = new QuestionManager(this.gameEngine, this.soundManager);
-        this.particleSystem = new ParticleSystem(this.canvas);
+        this.uiManager = new UIManager(this.gameEngine, this.soundManager);
         
-        // Connect all modules
+        // Connect modules to game engine
         this.gameEngine.levelManager = this.levelManager;
         this.gameEngine.questionManager = this.questionManager;
-        this.gameEngine.particleSystem = this.particleSystem;
         this.gameEngine.uiManager = this.uiManager;
         
-        // Initialize collision system (will be created when game starts)
-        this.collisionSystem = null;
+        // Store for global access
+        window.gameInstance = this;
         
+        // Initialize
         this.init();
     }
     
     init() {
         // Load saved progress
-        this.storageManager.loadGameProgress();
-        this.uiManager.updateUI();
+        if (this.storageManager && this.storageManager.loadGameProgress) {
+            this.storageManager.loadGameProgress();
+        }
+        
+        // Update UI
+        this.updateUI();
         
         // Load questions
-        loadQuestions();
+        if (typeof loadQuestions === 'function') {
+            loadQuestions();
+        }
         
-        // Set up event listeners
-        this.setupEventListeners();
+        // Setup basic event listeners
+        this.setupCoreEventListeners();
         
         // Show start screen
         this.uiManager.showScreen('start-screen');
         
-        // Start game engine
+        // Start game loop
         this.gameEngine.start();
-        
-        // Store instance globally for access
-        window.radioactivityRunner = this;
     }
     
-    setupEventListeners() {
-        // Keyboard events
+    setupCoreEventListeners() {
+        // Keyboard input to game engine
         window.addEventListener('keydown', (e) => {
             this.gameEngine.handleKeyDown(e.key);
         });
@@ -63,119 +66,62 @@ class RadioactivityRunner {
             this.gameEngine.handleKeyUp(e.key);
         });
         
-        // UI Button events
-        this.setupUIEventListeners();
-        
-        // Question events
-        this.setupQuestionEventListeners();
-        
-        // Sound control events
-        this.setupSoundEventListeners();
-    }
-    
-    setupUIEventListeners() {
         // Start game button
-        document.getElementById('start-game').addEventListener('click', () => {
-            this.modalManager.showModal('start-game', { playSound: true });
+        document.getElementById('start-game')?.addEventListener('click', () => {
             this.startGame();
-        });
-        
-        // How to play button
-        document.getElementById('how-to-play').addEventListener('click', () => {
-            this.modalManager.showInstructionsModal();
-        });
-        
-        // Reset progress button
-        document.getElementById('reset-progress').addEventListener('click', () => {
-            if (confirm('Are you sure you want to reset all progress?')) {
-                this.storageManager.resetGameProgress();
-                this.uiManager.updateUI();
-            }
-        });
-        
-        // Pause game button
-        document.getElementById('pause-game').addEventListener('click', () => {
-            this.gameEngine.togglePause();
-            this.uiManager.updatePauseButton(this.gameEngine.getGameState() === 'paused');
         });
         
         // Back to menu button
-        document.getElementById('back-to-menu').addEventListener('click', () => {
+        document.getElementById('back-to-menu')?.addEventListener('click', () => {
             if (confirm('Return to menu? Progress will be saved.')) {
-                this.storageManager.saveGameProgress();
+                if (this.storageManager && this.storageManager.saveGameProgress) {
+                    this.storageManager.saveGameProgress();
+                }
                 this.uiManager.showScreen('start-screen');
             }
         });
         
-        // Level navigation buttons
-        document.getElementById('next-level').addEventListener('click', () => {
-            if (GameState.currentLevel < 5) {
-                GameState.currentLevel++;
-                this.startGame();
-            } else {
-                this.uiManager.showScreen('start-screen');
-            }
-        });
-        
-        document.getElementById('replay-level').addEventListener('click', () => {
-            this.startGame();
-        });
-        
-        document.getElementById('return-to-menu').addEventListener('click', () => {
-            this.storageManager.saveGameProgress();
-            this.uiManager.showScreen('start-screen');
-        });
-        
-        // Bloom level selection
+        // Bloom level cards
         document.querySelectorAll('.bloom-card').forEach(card => {
             card.addEventListener('click', () => {
                 const level = parseInt(card.dataset.level);
                 if (level <= GameState.currentLevel) {
                     GameState.currentLevel = level;
                     this.startGame();
-                } else {
-                    alert(`Complete level ${GameState.currentLevel} first!`);
                 }
             });
         });
     }
     
-    // ... rest of the setupEventListeners and other methods remain similar
-    // but now use this.uiManager, this.modalManager, this.storageManager
-    
     startGame() {
+        // Get level design
         const level = GameState.currentLevel;
         const design = this.levelManager.getLevel(level);
         
         // Create player
-        this.gameEngine.player = new Player(
+        const player = new Player(
             design.start.x * this.gameEngine.tileSize,
             design.start.y * this.gameEngine.tileSize,
             this.gameEngine.tileSize
         );
         
-        // Create game objects from level design
+        // Create game objects
         const objects = this.levelManager.createGameObjects(design, this.gameEngine.tileSize);
-        this.gameEngine.platforms = objects.platforms;
-        this.gameEngine.ladders = objects.ladders;
-        this.gameEngine.gold = objects.gold;
-        this.gameEngine.enemies = objects.enemies;
-        this.gameEngine.bricks = objects.bricks;
-        this.gameEngine.holes = [];
         
-        // Initialize collision system
-        this.collisionSystem = new CollisionSystem(this.gameEngine, this.questionManager);
-        this.gameEngine.collisionSystem = this.collisionSystem;
+        // Setup game engine with new level
+        this.gameEngine.setupNewLevel(
+            player,
+            objects.platforms,
+            objects.ladders,
+            objects.gold,
+            objects.enemies,
+            objects.bricks,
+            level
+        );
         
         // Reset game state
         GameState.goldCollected = 0;
         GameState.lives = 3;
-        this.gameEngine.setGameState('playing');
-        this.gameEngine.gameTime = 0;
-        this.gameEngine.level = level;
-        this.gameEngine.allGoldCollected = false;
-        this.gameEngine.completeLevelAfterQuestion = false;
-        this.questionManager.allGoldCollected = false;
         
         // Update UI
         this.uiManager.updateGameUI();
@@ -185,17 +131,22 @@ class RadioactivityRunner {
         if (this.soundManager) {
             this.soundManager.stopBGM();
             this.soundManager.play('stageStart');
-            
-            setTimeout(() => {
-                this.soundManager.playBGM('mainBGM');
-            }, 1500);
+            setTimeout(() => this.soundManager.playBGM('mainBGM'), 1500);
         }
         
+        // Show game screen
         this.uiManager.showScreen('game-screen');
+    }
+    
+    updateUI() {
+        // Delegate to UIManager
+        if (this.uiManager.updateUI) {
+            this.uiManager.updateUI();
+        }
     }
 }
 
-// Initialize game when page loads
+// Initialize when page loads
 window.addEventListener('load', () => {
-    const game = new RadioactivityRunner();
+    new RadioactivityRunner();
 });

@@ -238,4 +238,27 @@ class UIManager {
     getCurrentScreen() {
         return this.currentScreen;
     }
+
+    // In ui/UIManager.js, update the UIManager class:
+
+    updateGameUI() {
+        document.getElementById('current-score').textContent = GameState.score;
+        document.getElementById('current-level').textContent = this.gameEngine.level;
+        document.getElementById('lives').textContent = GameState.lives;
+        document.getElementById('gold-count').textContent = GameState.goldCollected;
+    }
+    
+    showScreen(screenId) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId)?.classList.add('active');
+        
+        if (screenId === 'game-screen') {
+            this.gameEngine.setGameState('playing');
+        } else {
+            this.gameEngine.setGameState('menu');
+        }
+        
+        // Handle screen-specific logic
+        this.handleScreenChange(screenId);
+    }
 }

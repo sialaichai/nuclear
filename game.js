@@ -8,6 +8,8 @@ class RadioactivityRunner {
             return;
         }
         
+        this.keys = {}; 
+        
         // ========== FIX 1: PROPERLY GET SOUND MANAGER ==========
         // Check multiple possible locations for soundManager
         if (typeof soundManager !== 'undefined') {
@@ -149,15 +151,38 @@ class RadioactivityRunner {
     }
     
     setupCoreEventListeners() {
-        // Keyboard input to game engine
+
+        
+        // ========== KEYBOARD HANDLING FIX ==========
         window.addEventListener('keydown', (e) => {
-            this.gameEngine.handleKeyDown(e.key);
+            // Prevent default for game keys (stops page scrolling with arrows)
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+                e.preventDefault();
+            }
+            
+            // Store key in our local state
+            this.keys[e.key] = true;
+            
+            // Pass to game engine
+            if (this.gameEngine && this.gameEngine.handleKeyDown) {
+                this.gameEngine.handleKeyDown(e.key);
+            }
         });
         
         window.addEventListener('keyup', (e) => {
-            this.gameEngine.handleKeyUp(e.key);
+            // Store key in our local state
+            this.keys[e.key] = false;
+            
+            // Pass to game engine
+            if (this.gameEngine && this.gameEngine.handleKeyUp) {
+                this.gameEngine.handleKeyUp(e.key);
+            }
         });
         
+        // ========== MOBILE/TOUCH CONTROLS (Optional but good for testing) ==========
+        this.setupTouchControls();
+        
+               
         // Start game button
         document.getElementById('start-game')?.addEventListener('click', () => {
             this.startGame();
@@ -184,7 +209,67 @@ class RadioactivityRunner {
             });
         });
     }
-    
+
+    setupTouchControls() {
+        // Optional: Add on-screen touch controls for mobile
+        const touchControls = document.createElement('div');
+        touchControls.id = 'touch-controls';
+        touchControls.innerHTML = `
+            <div class="touch-arrows">
+                <button class="touch-btn" data-key="ArrowLeft">←</button>
+                <button class="touch-btn" data-key="ArrowUp">↑</button>
+                <button class="touch-btn" data-key="ArrowRight">→</button>
+                <button class="touch-btn" data-key="ArrowDown">↓</button>
+            </div>
+            <div class="touch-actions">
+                <button class="touch-btn action" data-key=" ">DIG</button>
+            </div>
+        `;
+        document.getElementById('game-screen')?.appendChild(touchControls);
+        
+        // Add event listeners for touch controls
+        document.querySelectorAll('.touch-btn').forEach(btn => {
+            const key = btn.dataset.key;
+            
+            // Touch start
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (this.gameEngine && this.gameEngine.handleKeyDown) {
+                    this.gameEngine.handleKeyDown(key);
+                }
+            });
+            
+            // Touch end
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                if (this.gameEngine && this.gameEngine.handleKeyUp) {
+                    this.gameEngine.handleKeyUp(key);
+                }
+            });
+            
+            // Mouse events for desktop testing
+            btn.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                if (this.gameEngine && this.gameEngine.handleKeyDown) {
+                    this.gameEngine.handleKeyDown(key);
+                }
+            });
+            
+            btn.addEventListener('mouseup', (e) => {
+                e.preventDefault();
+                if (this.gameEngine && this.gameEngine.handleKeyUp) {
+                    this.gameEngine.handleKeyUp(key);
+                }
+            });
+            
+            btn.addEventListener('mouseleave', (e) => {
+                if (this.gameEngine && this.gameEngine.handleKeyUp) {
+                    this.gameEngine.handleKeyUp(key);
+                }
+            });
+        });
+    }
+        
     startGame() {
         // Get level design
         const level = GameState.currentLevel;

@@ -1,4 +1,4 @@
-// levels.js - Stores level configurations
+// levels.js
 const LevelData = {
     1: {
         platforms: [
@@ -64,7 +64,7 @@ const LevelData = {
     }
 };
 
-// Generate Levels 3-5 based on Level 2 template
+// Generate Levels 3-5
 for (let i = 3; i <= 5; i++) {
     LevelData[i] = JSON.parse(JSON.stringify(LevelData[2]));
     LevelData[i].totalGold = 5 + i;

@@ -548,4 +548,24 @@ class GameEngine {
             this.soundManager.play('gameOver');
         }
     }
+
+    // In core/GameEngine.js, add to GameEngine class:
+    setupNewLevel(player, platforms, ladders, gold, enemies, bricks, level) {
+        this.player = player;
+        this.platforms = platforms;
+        this.ladders = ladders;
+        this.gold = gold;
+        this.enemies = enemies;
+        this.bricks = bricks;
+        this.holes = [];
+        this.level = level;
+        this.allGoldCollected = false;
+        this.completeLevelAfterQuestion = false;
+        this.gameTime = 0;
+        
+        // Initialize collision system if needed
+        if (!this.collisionSystem && this.questionManager) {
+            this.collisionSystem = new CollisionSystem(this, this.questionManager);
+        }
+    }
 }

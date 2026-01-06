@@ -52,6 +52,20 @@ class RadioactivityRunner {
         
         // Show start screen
         this.showScreen('start-screen');
+
+        // --- ADD THIS TO ENABLE MUSIC ON FIRST CLICK ---
+        const enableAudio = () => {
+            if (this.soundManager && this.gameState === 'menu') {
+                this.soundManager.playBGM('title');
+            }
+            // Remove listener after first interaction
+            document.removeEventListener('click', enableAudio);
+            document.removeEventListener('keydown', enableAudio);
+        };
+
+        document.addEventListener('click', enableAudio);
+        document.addEventListener('keydown', enableAudio);
+        // ------------------------------------------------
     }
 
     setupEventListeners() {

@@ -50,6 +50,10 @@ class Player {
     
     // Handle keyboard input for movement
     handleMovement(keys, ladders) {
+        if (!keys) {
+            console.warn('No keys object provided to handleMovement');
+            return;
+        }
         // Horizontal movement
         this.velocityX = 0;
         

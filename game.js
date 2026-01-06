@@ -882,6 +882,13 @@ class RadioactivityRunner {
         
         // Show feedback and hide question
         this.hideModal('question-modal');
+            // --- ADD THESE LINES TO RESUME GAMEPLAY IMMEDIATELY ---
+        this.gameState = 'playing';
+        this.lastTime = Date.now(); // Important: Reset time to prevent physics glitches (jumping)
+
+            if (this.soundManager) {
+            this.soundManager.resumeBGM();
+        }
         
         // If all gold collected AND answer was correct, show level success
         if (this.allGoldCollected && isCorrect) {

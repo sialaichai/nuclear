@@ -16,5 +16,11 @@ radioactivity-runner/
 ├── index.html
 ├── style.css
 ├── game.js
-├── questions.js
+├── questions/
+│   ├── level1.js  (Remembering)
+│   ├── level2.js  (Understanding)
+│   ├── level3.js  (Applying)
+│   ├── level4.js  (Analyzing)
+│   └── level5.js  (Evaluating)
+├── questions.js   (Main loader)
 └── sound.js

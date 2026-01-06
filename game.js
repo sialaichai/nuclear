@@ -279,13 +279,60 @@ class RadioactivityRunner {
             totalGold: 6
         };
 
+
+        // Level 3: Applying - Asymmetrical "Tower" Layout
+    this.levelDesigns[3] = {
+        // Asymmetrical Platforms (Zig-Zag pattern)
+        platforms: [
+            {x: 0, y: 14, width: 25, height: 2}, // Ground
+            {x: 0, y: 11, width: 8, height: 1},  // Left low platform
+            {x: 17, y: 9, width: 8, height: 1},  // Right mid platform
+            {x: 5, y: 6, width: 10, height: 1},  // Center high platform
+            {x: 18, y: 4, width: 5, height: 1}   // Top right perch
+        ],
+        ladders: [
+            {x: 6, y: 11, height: 3}, // Ground to Left Low
+            {x: 20, y: 9, height: 5}, // Ground to Right Mid
+            {x: 8, y: 6, height: 5},  // Left Low to Center High
+            {x: 19, y: 4, height: 5}  // Right Mid to Top Right
+        ],
+        gold: [
+            {x: 1, y: 10}, {x: 23, y: 8}, {x: 7, y: 5}, {x: 20, y: 3}, // High gold
+            {x: 12, y: 13}, {x: 2, y: 13} // Ground gold
+        ],
+        // Enemies placed on upper platforms
+        enemies: [
+            // Enemy on the Ground
+            {x: 10, y: 13, patrol: {left: 8, right: 15}},
+            
+            // Enemy on Right Mid Platform (Height 9)
+            {x: 19, y: 8, patrol: {left: 17, right: 24}}, 
+            
+            // Enemy on Center High Platform (Height 6)
+            {x: 7, y: 5, patrol: {left: 5, right: 14}} 
+        ],
+        bricks: [
+            {x: 2, y: 11, destructible: true},
+            {x: 22, y: 9, destructible: true}
+        ],
+        start: {x: 1, y: 13},
+        totalGold: 6
+    };
+
+    // For Levels 4 and 5, you can either create new designs 
+    // or copy Level 3 for now:
+    for (let i = 4; i <= 5; i++) {
+        this.levelDesigns[i] = JSON.parse(JSON.stringify(this.levelDesigns[3]));
+        this.levelDesigns[i].totalGold = 8;
+    }
+}
         // Additional levels can be defined similarly
         // For prototype, we'll use variations of level 1 & 2
-        for (let i = 3; i <= 5; i++) {
-            this.levelDesigns[i] = JSON.parse(JSON.stringify(this.levelDesigns[2]));
+      //  for (let i = 3; i <= 5; i++) {
+      //      this.levelDesigns[i] = JSON.parse(JSON.stringify(this.levelDesigns[2]));
             this.levelDesigns[i].totalGold = 5 + i;
-        }
-    }
+      //  }
+  //  }
 
     startGame() {
         this.level = GameState.currentLevel;

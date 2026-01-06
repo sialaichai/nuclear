@@ -330,7 +330,7 @@ class RadioactivityRunner {
         // For prototype, we'll use variations of level 1 & 2
       //  for (let i = 3; i <= 5; i++) {
       //      this.levelDesigns[i] = JSON.parse(JSON.stringify(this.levelDesigns[2]));
-            this.levelDesigns[i].totalGold = 5 + i;
+        //    this.levelDesigns[i].totalGold = 5 + i;
       //  }
   //  }
 

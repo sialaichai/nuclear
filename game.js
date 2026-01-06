@@ -429,9 +429,9 @@ class RadioactivityRunner {
         this.checkCollisions();
         
         // Check win condition
-        if (GameState.goldCollected >= this.levelDesigns[this.level].totalGold) {
-            this.levelComplete();
-        }
+        //if (GameState.goldCollected >= this.levelDesigns[this.level].totalGold) {
+       //     this.levelComplete();
+        //}
     }
 
     updatePlayer(deltaTime) {

@@ -703,64 +703,42 @@ class RadioactivityRunner {
         console.log(`Player hit! Lives: ${GameState.lives}`);
     }
     
-checkCollisions() {
-    // Gold collection
-    for (let i = 0; i < this.gold.length; i++) {
-        const goldPiece = this.gold[i];
-        if (!goldPiece.collected && this.isColliding(this.player, goldPiece)) {
-            goldPiece.collected = true;
-            GameState.goldCollected++;
-            GameState.score += 50;
-            
-            // Play gold collection sound
-            if (this.soundManager) {
-                this.soundManager.play('gold');
-            }
-            
-            document.getElementById('gold-count').textContent = GameState.goldCollected;
-            document.getElementById('current-score').textContent = GameState.score;
-            
-            // Ask question when gold is collected
-            this.askQuestion();
-            
-            // Visual feedback
-            this.createParticles(goldPiece.x + goldPiece.width/2, goldPiece.y + goldPiece.height/2, 10, '#FFD700');
-            
-            // Check if ALL gold collected - but DON'T show success yet
-            if (GameState.goldCollected >= this.levelDesigns[this.level].totalGold) {
-                // Set a flag to show success after question is answered
-                this.allGoldCollected = true;
+    checkCollisions() {
+        // Gold collection
+        for (let i = 0; i < this.gold.length; i++) {
+            const goldPiece = this.gold[i];
+            if (!goldPiece.collected && this.isColliding(this.player, goldPiece)) {
+                goldPiece.collected = true;
+                GameState.goldCollected++;
+                GameState.score += 50;
                 
-                // Play special sound for last gold
+                // Play gold collection sound
                 if (this.soundManager) {
-                    this.soundManager.play('allGold');
+                    this.soundManager.play('gold');
                 }
+                
+                document.getElementById('gold-count').textContent = GameState.goldCollected;
+                document.getElementById('current-score').textContent = GameState.score;
+                
+                // Ask question when gold is collected
+                this.askQuestion();
+                
+                // Visual feedback
+                this.createParticles(goldPiece.x + goldPiece.width/2, goldPiece.y + goldPiece.height/2, 10, '#FFD700');
+                
+                // Check if ALL gold collected - but DON'T show success yet
+                if (GameState.goldCollected >= this.levelDesigns[this.level].totalGold) {
+                    // Set a flag to show success after question is answered
+                    this.allGoldCollected = true;
+                    
+                    // Play special sound for last gold
+                    if (this.soundManager) {
+                        this.soundManager.play('allGold');
+                    }
+                }
+                break;
             }
-            break;
         }
-    }
-
-    // ENEMY COLLISION - Only check if enemy is NOT trapped
-    if (this.player.invincibleTimer <= 0) {
-        for (const enemy of this.enemies) {
-            if (!enemy.trapped && this.isColliding(this.player, enemy)) {
-                this.playerHit();
-                break; // Only one hit per frame
-            }
-        }
-    }
-}
-
-    // ENEMY COLLISION - Only check if enemy is NOT trapped
-    if (this.player.invincibleTimer <= 0) {
-        for (const enemy of this.enemies) {
-            if (!enemy.trapped && this.isColliding(this.player, enemy)) {
-                this.playerHit();
-                break; // Only one hit per frame
-            }
-        }
-    }
-}
     
         // ENEMY COLLISION - Only check if enemy is NOT trapped
         if (this.player.invincibleTimer <= 0) {
@@ -772,6 +750,9 @@ checkCollisions() {
             }
         }
     }
+
+
+     
     askQuestion() {
         if (this.gameState !== 'playing') return;
         // Pause main BGM when question appears

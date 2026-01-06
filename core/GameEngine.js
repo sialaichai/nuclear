@@ -35,6 +35,17 @@ class GameEngine {
         // Level completion tracking
         this.allGoldCollected = false;
         this.completeLevelAfterQuestion = false;
+
+            // Debug: Log keyboard state
+        this.debugKeyboard = false; // Set to true to enable logging
+        if (this.debugKeyboard) {
+            setInterval(() => {
+                const activeKeys = Object.keys(this.keys).filter(k => this.keys[k]);
+                if (activeKeys.length > 0) {
+                    console.log('Active keys:', activeKeys);
+                }
+            }, 1000);
+        }
     }
     
     // Start the game loop
